@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.soulfiremc.generator.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "BlockAccessor",
+    "BlockSettingsOffsetMixin",
+    "EULAMixin",
+    "DataPackConfigMixin",
+    "ReadyMixin"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
