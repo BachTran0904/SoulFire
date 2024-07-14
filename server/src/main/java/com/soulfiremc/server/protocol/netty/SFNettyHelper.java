@@ -87,7 +87,7 @@ public class SFNettyHelper {
   }
 
   public record TransportMethod(
-    boolean tcpFastOpenClientSideAvailable,
+    boolean tcpFastOpen,
     Class<? extends Channel> channelClass,
     Class<? extends DatagramChannel> datagramChannelClass,
     BiFunction<Integer, ThreadFactory, EventLoopGroup> eventLoopFactory) {}
