@@ -36,8 +36,5 @@ public class LoadTest {
     SFLogAppender.INSTANCE.start();
 
     var server = new SoulFireServer("127.0.0.1", PortHelper.getRandomAvailablePort(), new DefaultPluginManager(), Instant.now(), new DefaultAuthSystem(), tempDir);
-
-    server.shutdownManager().shutdownSoftware(false);
-    server.shutdownManager().awaitShutdown();
   }
 }

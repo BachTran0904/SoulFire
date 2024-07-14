@@ -113,116 +113,137 @@ public class ServerSettingsRegistry {
   }
 
   public List<ClientPluginSettingsPage> exportSettingsMeta() {
-    var list = new ArrayList<ClientPluginSettingsPage>();
+    List<ClientPluginSettingsPage> list = new ArrayList<>();
 
     for (var namespaceEntry : namespaceMap.entrySet()) {
       var namespaceRegistry = namespaceEntry.getValue();
-      var entries = new ArrayList<ClientPluginSettingEntry>();
-      for (var property : namespaceRegistry.properties) {
-        switch (property) {
-          case BooleanProperty booleanProperty -> entries.add(
-            ClientPluginSettingEntry.newBuilder()
-              .setSingle(
-                fillSingleProperties(booleanProperty)
-                  .setType(
-                    ClientPluginSettingType.newBuilder()
-                      .setBool(
-                        BoolSetting.newBuilder()
-                          .setDef(booleanProperty.defaultValue())
-                          .build())
-                      .build())
-                  .build())
-              .build());
-          case IntProperty intProperty -> entries.add(
-            ClientPluginSettingEntry.newBuilder()
-              .setSingle(
-                fillSingleProperties(intProperty)
-                  .setType(
-                    ClientPluginSettingType.newBuilder()
-                      .setInt(createIntSetting(intProperty))
-                      .build())
-                  .build())
-              .build());
-          case DoubleProperty doubleProperty -> entries.add(
-            ClientPluginSettingEntry.newBuilder()
-              .setSingle(
-                fillSingleProperties(doubleProperty)
-                  .setType(
-                    ClientPluginSettingType.newBuilder()
-                      .setDouble(createDoubleSetting(doubleProperty))
-                      .build())
-                  .build())
-              .build());
-          case MinMaxPropertyLink minMaxPropertyLink -> {
-            var minProperty = minMaxPropertyLink.min();
-            var maxProperty = minMaxPropertyLink.max();
-            entries.add(
-              ClientPluginSettingEntry.newBuilder()
-                .setMinMaxPair(
-                  ClientPluginSettingEntryMinMaxPair.newBuilder()
-                    .setMin(
-                      fillMultiProperties(minProperty)
-                        .setIntSetting(createIntSetting(minProperty))
-                        .build())
-                    .setMax(
-                      fillMultiProperties(maxProperty)
-                        .setIntSetting(createIntSetting(maxProperty))
-                        .build())
-                    .build())
-                .build());
-          }
-          case StringProperty stringProperty -> entries.add(
-            ClientPluginSettingEntry.newBuilder()
-              .setSingle(
-                fillSingleProperties(stringProperty)
-                  .setType(
-                    ClientPluginSettingType.newBuilder()
-                      .setString(
-                        StringSetting.newBuilder()
-                          .setDef(stringProperty.defaultValue())
-                          .setSecret(stringProperty.secret())
-                          .build())
-                      .build())
-                  .build())
-              .build());
-          case ComboProperty comboProperty -> {
-            var options = new ArrayList<ComboOption>();
-            for (var option : comboProperty.options()) {
-              options.add(
-                ComboOption.newBuilder()
-                  .setId(option.id())
-                  .setDisplayName(option.displayName())
-                  .build());
-            }
-            entries.add(
-              ClientPluginSettingEntry.newBuilder()
-                .setSingle(
-                  fillSingleProperties(comboProperty)
-                    .setType(
-                      ClientPluginSettingType.newBuilder()
-                        .setCombo(
-                          ComboSetting.newBuilder()
-                            .setDef(comboProperty.defaultValue())
-                            .addAllOptions(options)
-                            .build())
-                        .build())
-                    .build())
-                .build());
-          }
-        }
-      }
-
-      list.add(
-        ClientPluginSettingsPage.newBuilder()
-          .setPageName(namespaceRegistry.pageName)
-          .setHidden(namespaceRegistry.hidden)
-          .setNamespace(namespaceEntry.getKey())
-          .addAllEntries(entries)
-          .build());
+      List<ClientPluginSettingEntry> entries = processProperties(namespaceRegistry.properties);
+      list.add(createSettingsPage(namespaceEntry.getKey(), namespaceRegistry, entries));
     }
 
     return list;
   }
+
+  private List<ClientPluginSettingEntry> processProperties(List<Property> properties) {
+    List<ClientPluginSettingEntry> entries = new ArrayList<>();
+    for (var property : properties) {
+      switch (property) {
+        case BooleanProperty booleanProperty -> entries.add(createBooleanEntry(booleanProperty));
+        case IntProperty intProperty -> entries.add(createIntEntry(intProperty));
+        case DoubleProperty doubleProperty -> entries.add(createDoubleEntry(doubleProperty));
+        case MinMaxPropertyLink minMaxPropertyLink -> entries.add(createMinMaxEntry(minMaxPropertyLink));
+        case StringProperty stringProperty -> entries.add(createStringEntry(stringProperty));
+        case ComboProperty comboProperty -> entries.add(createComboEntry(comboProperty));
+      }
+    }
+    return entries;
+  }
+
+  private ClientPluginSettingEntry createBooleanEntry(BooleanProperty property) {
+    return ClientPluginSettingEntry.newBuilder()
+      .setSingle(
+        fillSingleProperties(property)
+          .setType(ClientPluginSettingType.newBuilder()
+            .setBool(BoolSetting.newBuilder()
+              .setDef(property.defaultValue())
+              .build())
+            .build())
+          .build())
+      .build();
+  }
+
+  private ClientPluginSettingEntry createIntEntry(IntProperty property) {
+    return ClientPluginSettingEntry.newBuilder()
+      .setSingle(
+        fillSingleProperties(property)
+          .setType(ClientPluginSettingType.newBuilder()
+            .setInt(createIntSetting(property))
+            .build())
+          .build())
+      .build();
+  }
+
+  private ClientPluginSettingEntry createDoubleEntry(DoubleProperty property) {
+    return ClientPluginSettingEntry.newBuilder()
+      .setSingle(
+        fillSingleProperties(property)
+          .setType(ClientPluginSettingType.newBuilder()
+            .setDouble(createDoubleSetting(property))
+            .build())
+          .build())
+      .build();
+  }
+
+  private ClientPluginSettingEntry createMinMaxEntry(MinMaxPropertyLink propertyLink) {
+    var minProperty = propertyLink.min();
+    var maxProperty = propertyLink.max();
+    return ClientPluginSettingEntry.newBuilder()
+      .setMinMaxPair(
+        ClientPluginSettingEntryMinMaxPair.newBuilder()
+          .setMin(
+            fillMultiProperties(minProperty)
+              .setIntSetting(createIntSetting(minProperty))
+              .build())
+          .setMax(
+            fillMultiProperties(maxProperty)
+              .setIntSetting(createIntSetting(maxProperty))
+              .build())
+          .build())
+      .build();
+  }
+
+  private ClientPluginSettingEntry createStringEntry(StringProperty property) {
+    return ClientPluginSettingEntry.newBuilder()
+      .setSingle(
+        fillSingleProperties(property)
+          .setType(ClientPluginSettingType.newBuilder()
+            .setString(StringSetting.newBuilder()
+              .setDef(property.defaultValue())
+              .setSecret(property.secret())
+              .build())
+            .build())
+          .build())
+      .build();
+  }
+
+  private ClientPluginSettingEntry createComboEntry(ComboProperty property) {
+    List<ComboOption> options = new ArrayList<>();
+    for (var option : property.options()) {
+      options.add(
+        ComboOption.newBuilder()
+          .setId(option.id())
+          .setDisplayName(option.displayName())
+          .build()
+      );
+    }
+
+    return ClientPluginSettingEntry.newBuilder()
+      .setSingle(
+        fillSingleProperties(property)
+          .setType(
+            ClientPluginSettingType.newBuilder()
+              .setCombo(
+                ComboSetting.newBuilder()
+                  .setDef(property.defaultValue())
+                  .addAllOptions(options)
+                  .build()
+              )
+              .build()
+          )
+          .build()
+      )
+      .build();
+  }
+
+  private ClientPluginSettingsPage createSettingsPage(String namespace, NamespaceRegistry namespaceRegistry, List<ClientPluginSettingEntry> entries) {
+    return ClientPluginSettingsPage.newBuilder()
+      .setPageName(namespaceRegistry.pageName)
+      .setHidden(namespaceRegistry.hidden)
+      .setNamespace(namespace)
+      .addAllEntries(entries)
+      .build();
+  }
+
 
   private ClientPluginSettingEntrySingle.Builder fillSingleProperties(SingleProperty property) {
     return ClientPluginSettingEntrySingle.newBuilder()
