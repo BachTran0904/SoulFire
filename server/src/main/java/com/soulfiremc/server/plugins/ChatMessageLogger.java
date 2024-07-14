@@ -47,7 +47,6 @@ public class ChatMessageLogger implements InternalPlugin {
           case TrueColor -> ColorLevel.TRUE_COLOR;
         })
       .build();
-  private static final ExpiringSet<String> CHAT_MESSAGES = new ExpiringSet<>(5, TimeUnit.SECONDS);
 
   public static void onMessage(ChatMessageReceiveEvent event) {
     if (!event.connection().settingsHolder().get(ChatMessageSettings.ENABLED)) {
@@ -64,11 +63,6 @@ public class ChatMessageLogger implements InternalPlugin {
   }
 
   private static synchronized void logChatMessage(String message) {
-    if (CHAT_MESSAGES.contains(message)) {
-      return;
-    }
-
-    CHAT_MESSAGES.add(message);
     log.info(message);
   }
 
