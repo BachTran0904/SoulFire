@@ -1,0 +1,20 @@
+name: PakSMP Stress Test
+on: workflow_dispatch
+
+jobs:
+  launch-bots:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get SoulFire Files
+        uses: actions/checkout@v4
+
+      - name: Prepare Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Start Attack
+        run: |
+          chmod +x gradlew
+          ./gradlew :dedicated-launcher:run --args="--host lapatasmp.fun --port 25565 --amount 50 --script 'wait 3000; send /register 1234555 1234555'"
